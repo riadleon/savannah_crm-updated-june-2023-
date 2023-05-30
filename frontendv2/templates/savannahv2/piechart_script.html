@@ -1,0 +1,46 @@
+<script>
+var ctx = document.getElementById("{{chart.id}}");
+var {{chart.id}} = new Chart(ctx, {
+  type: 'doughnut',
+  data: {
+    labels: {{chart.get_data_names|safe}},
+    datasets: [{
+      data: {{chart.get_data_values|safe}},
+      backgroundColor: [{% for color in chart.get_data_colors %}"{{color}}dd",{% endfor %}],
+      borderColor: [{% for color in chart.get_data_colors %}"{{color}}",{% endfor %}],
+      hoverBorderColor: "rgba(234, 236, 244, 1)",
+      borderWidth: 1,
+      borderAlign: 'inner',
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: false,
+      caretPadding: 10,
+    },
+    legend: {
+      display: {{chart.show_legend|default:'true'}}
+    },
+    cutoutPercentage: 0,
+  },
+});
+$("#{{chart.id}}").click( 
+    function(evt){
+        var activePoints = {{chart.id}}.getElementAtEvent(evt);
+        if (activePoints.length > 0) {
+          var dataLinks = {{chart.get_data_links|safe}};
+          if (dataLinks[activePoints[0]._index].length > 0) {
+            //window.alert(dataLinks[activePoints[0]._index]);
+            window.location = dataLinks[activePoints[0]._index];
+          }
+        }
+    }
+); 
+</script>

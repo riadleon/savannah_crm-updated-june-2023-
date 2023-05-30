@@ -1,0 +1,123 @@
+{% extends "savannahv2/blank.html" %}
+{% load humanize static simple_math %}
+
+
+{% block page_title %} | Start your Community{% endblock %}
+
+{% block page_styles %}
+  <script src="https://js.stripe.com/v3/"></script>
+{% endblock %}
+
+{% block page_content %}
+
+<!-- Content Row -->
+<div class="row mt-5 justify-content-center">
+<div class="col-xl-10 col-md-12 mb-5 mt-8 align-items-center">
+<center>
+    <div class="card shadow h-100 py-2">
+    <div class="card-body">
+        <div class="align-items-center">
+            <h2>Pick your plan:</h2>
+            <div class="row justify-content-center">
+              {% for plan in plans %}
+              <div class="card shadow h-100 p-0 py-0 col border border-primary m-3">
+                <div class="card-body">
+                  <h5 class="card-title">{{plan.nickname}}</h5>
+                    <div class="mb-1 font-weight-bold text-gray-800">${{plan.amount|as_int}} /{{plan.interval}}</div>
+                  <div class="card-text">
+                    <div class="p-2 justify-content-left">
+                        <div class="text-left">
+                          <i class="fas fa-check-square text-primary"> </i> Unlimited Members
+                        </div>
+                        <div class="text-left">
+                            <i class="fas fa-check-square {% if plan.metadata.managers|as_int == 0 %}text-primary{% else %}text-secondary{% endif %}"> </i> 
+                            {{plan.metadata.managers|default:'Unlimited'}} Manager{% if plan.metadata.managers|as_int != 1 %}s{% endif %}
+                        </div>
+                        <div class="text-left">
+                            <i class="fas fa-check-square {% if plan.metadata.sources|as_int == 0 %}text-primary{% else %}text-secondary{% endif %}"> </i> 
+                            {{plan.metadata.sources|default:'Unlimited'}} Data Source{% if plan.metadata.sources|as_int != 1 %}s{% endif %}
+                        </div>
+                        <div class="text-left">
+                            <i class="fas fa-check-square {% if plan.metadata.projects|as_int == 0 %}text-primary{% else %}text-secondary{% endif %}"> </i> 
+                            {{plan.metadata.projects|default:'Unlimited'}} Project{% if plan.metadata.projects|as_int != 1 %}s{% endif %}
+                        </div>
+                        <div class="text-left">
+                            <i class="fas fa-check-square {% if plan.metadata.tags|as_int == 0 %}text-primary{% else %}text-secondary{% endif %}"> </i> 
+                            {{plan.metadata.tags|default:'Unlimited'}} Tag{% if plan.metadata.tags|as_int != 1 %}s{% endif %}
+                        </div>
+                        <div class="text-left">
+                            <i class="{% if plan.metadata.sales_integration == "true" %}fas fa-check-square text-primary{% else %}far fa-square text-secondary{% endif %}"> </i> 
+                            {% if plan.metadata.sales_integration == "true" %}Salesforce integration{% else %}No sales integrations{% endif %}
+                        </div>
+
+                    </div>
+                    <button onClick="subscribeClicked('{{plan.id}}');" class="btn {% if forloop.first or forloop.last %}btn-primary{% else %}btn-success{% endif %}" type="submit">{{plan.nickname}}</button>
+                    </div>
+                  </div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="text-muted text-small mt-2">
+            Savannah uses Stripe for payment processing
+                    <div class="mb-1 small text-gray-500">Cancel any time.</div>
+            </div>
+
+            <div>
+            <br/>
+            <a class="btn btn-sm btn-secondary" href="{% url 'dashboard' community.id %}"><i class="fas fa-chevron-left"> </i> Back</a>
+            <a class="btn btn-sm btn-secondary" href="https://savannahhq.com/request-a-demo">Request a Demo</a>
+            </div>
+        </div>
+    </div>
+    </div>
+</center>
+</div>
+</div>
+<!-- End row -->
+
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+     var DOMAIN = window.location.origin;
+ 
+      var stripe = Stripe("{{ STRIPE_KEY }}");
+ 
+      // Handle any errors from Checkout
+      var handleResult = function (result) {
+        if (result.error) {
+          var displayError = document.getElementById("error-message");
+          displayError.textContent = result.error.message;
+        }
+      };
+ 
+      // Create a Checkout Session with the selected plan ID
+      var createCheckoutSession = function(plan_id) {
+        return fetch("{% url 'billing:signup_subscribe_session' community.id %}?plan="+plan_id, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken":  '{{csrf_token}}',
+          },
+          // ... body section if you want to pass the product or price_id to the backend
+        }).then(function(result) {
+          return result.json();
+        });
+      };
+ 
+    // Setup event handler to create a Checkout Session when button is clicked
+    var subscribeClicked = function(plan_id) {
+          createCheckoutSession(plan_id).then(function(data) {
+            // Call Stripe.js method to redirect to the new Checkout page
+            stripe
+              .redirectToCheckout(
+                {
+                    sessionId: data.sessionId
+                }
+              )
+              .then(handleResult);
+          });
+        };
+</script>
+{% endblock %}

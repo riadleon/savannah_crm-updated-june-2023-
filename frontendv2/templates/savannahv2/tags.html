@@ -1,0 +1,78 @@
+{% extends "savannahv2/base.html"%}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %} | {{view.community.name}} Tags{% endblock %}
+
+{% block page_alerts %}
+          {% if view.suggestion_count %}
+          <div class="alerts">
+              <div class="m-3 alert alert-info">You have <b>{{view.suggestion_count }}</b> <a href="{% url 'tag_suggestions' view.community.id %}">tag suggestion{% if view.suggestion_count > 1 %}s{% endif %}</a></div>
+          </div>
+          {% endif %}
+{% endblock %}
+
+{% block page_content %}
+
+          <!-- Content Row -->
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-8 mb-8">
+
+              <!-- New Members-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Tags</h6>
+                  <a class="m-0 btn btn-sm btn-success text-white" href="{% url 'tag_add' view.community.id %}"><i class="fas fa-plus"></i> Add</a>
+                </div>
+                <div class="card-body p-0">
+                <div class="table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col" width="30%">Name</th>
+                    <th scope="col">Members</th>
+                    <th scope="col">Channels</th>
+                    <th scope="col">Keywords</th>
+                    <th class="text-center" width="100px" scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                <form class="inline-form" action="{% url 'tags' view.community.id %}" method="POST">
+                {% csrf_token %}
+                {% for tag in view.all_tags %}
+                <tr style="background-color: #{{tag.color}}; color: #{{tag.color}}aa">
+                  <td class="tag-text text-nowrap text-gray-800">
+                    <a href="{% url 'tag_edit' tag.id %}" style="color: #{{tag.color}}aa"><i class="fas fa-hashtag"></i> {{ tag.name }}</a>
+                  </td>
+                  <td class="tag-text">{{tag.member_count|intcomma}}</td>
+                  <td class="tag-text">{{tag.channel_count|intcomma}}</td>
+                  <td class="tag-text">{{tag.keywords|default:'-'}}</td>
+                  <td class="tag-text text-center text-nowrap">
+                    {% if tag.editable %}
+                    <button style="background-color: #55555577;" class="btn btn-sm" type="submit" name="delete_tag" value="{{tag.id}}" title="Delete Tag"><i class="fas fa-trash"> </i></button>
+                    {% else %}
+                    <span class="btn btn-sm" title="Tag is managed by {{tag.connector_name}}"><i class="fas fa-lock"> </i></span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+                </form>
+                </tbody>
+                </table>
+                </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}
+
+{% block page_scripts %}
+
+{% endblock %}

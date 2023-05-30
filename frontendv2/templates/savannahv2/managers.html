@@ -1,0 +1,175 @@
+{% extends "savannahv2/base.html"%}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %} | {{view.community.name}} Settings{% endblock %}
+
+{% block page_content %}
+<!-- Page Heading -->
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">{{view.community.name}} Settings</h1>
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-xl-8 col-lg-9 mb-8">
+
+              <!-- Managers -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Managers</h6>
+                  <a class="m-0 btn btn-sm btn-success text-white" href="{% url 'manager_invite' view.community.id %}"><i class="fas fa-user-plus"></i> Invite</a>
+                </div>
+                <div class="card-body p-0">
+                <div class="table-responsive">
+                <form class="inline-form" action="{% url 'managers' view.community.id %}" method="POST">
+                {% csrf_token %}
+                <table class="table">
+                <thead>
+                  <tr>
+                  {% if view.is_owner %}
+                    <th scope="col" width="30%">User</th>
+                    <th scope="col" width="30%">Email</th>
+                    <th scope="col" width="25%">Last Active</th>
+                    <th scope="col" width="15%">Action</th>
+                  {% else %}
+                    <th scope="col" width="35%">User</th>
+                    <th scope="col" width="35%">Email</th>
+                    <th scope="col" width="30%">Last Active</th>
+                  {% endif %}
+                  </tr>
+                </thead>
+                <tbody>
+                {% for manager in view.all_managers %}
+                <tr>
+                  <td>
+                    <span class="text-nowrap">{{manager}}</span>
+                    {% if manager.display_name != manager.user.username %}
+                    <span class="text-nowrap">({{manager.user.username}})</span>
+                    {% endif %}
+                  </td>
+                  <td>{% if manager.email %}<a href="mailto:{{manager.email}}">{{manager.email}}</a>{% endif %}</td>
+                  <td>{{manager.last_seen|default:'-'}}</td>
+                  {% if view.is_owner %}
+                  <td><button class="btn btn-danger btn-sm" type="submit" name="remove_manager" value="{{manager.id}}" title="Remove"><i class="fas fa-trash"> </i></button></td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </form>
+                </div>
+                </div>
+              </div>
+
+
+              <!-- Invitations -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Pending Invitations</h6>
+                </div>
+                <div class="card-body p-0">
+                <div class="table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col" width="30%">Email</th>
+                    <th scope="col" width="20%">Invited By</th>
+                    <th scope="col" width="20%">Invited Date</th>
+                    <th scope="col" width="20%">Expires</th>
+                    <th scope="col" width="10%">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for invite in view.invitations %}
+                <tr>
+                  <td><a href="mailto:{{invite.email}}">{{invite.email}}</a></td>
+                  <td>{{invite.invited_by}}</td>
+                  <td>{{invite.timestamp}}</td>
+                  <td>{{invite.expires}}</td>
+                  <td class="text-nowrap">
+                    <form class="form-inline d-inline" action="{% url 'resend_invite' community_id=view.community.id %}" method="POST">{% csrf_token %}<input type="hidden" name="invite_id" value="{{invite.id}}"><button type="submit" class="btn btn-sm btn-primary" title="Resend Invitation"><i class="fas fa-share"></i></button></form>
+                    <form class="form-inline d-inline" action="{% url 'revoke_invite' community_id=view.community.id %}" method="POST">{% csrf_token %}<input type="hidden" name="invite_id" value="{{invite.id}}"><button type="submit" class="btn btn-sm btn-danger" title="Revoke Invitation"><i class="fas fa-trash"></i></button></form>
+                  </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Profile  -->
+            <div class="col-xl-4 col-lg-3">
+
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Subscription</h6>
+                  {% if view.community.status == view.community.SETUP or not view.community.management.subscription %}
+                  <a class="btn btn-sm btn-success" href="{% url 'billing:signup_org' view.community.id %}"><i class="fas fa-file-invoice"> </i> Signup Now</a>
+                  {% elif view.community.status == view.community.DEMO %}
+                  
+                  {% elif view.community.status != view.community.ACTIVE %}
+                  <a class="btn btn-sm btn-success" href="{% url 'billing:upgrade' view.community.id %}"><i class="fas fa-file-invoice"> </i> Update Info</a>
+                  {% else %}
+                  <a class="btn btn-sm btn-primary" href="{% url 'billing:upgrade' view.community.id %}"><i class="fas fa-file-invoice"> </i> Change Plan</a>
+                  {% endif %}
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                <div class="container-fluid">
+
+                {% if view.community.status == view.community.ACTIVE %}
+                <p><b>Plan: </b>{{view.community.management.name}}</p>
+                  {% if view.community.management.subscription.cancel_at_period_end %}
+                  <div class="text-muted small">Ends: {{view.community.management.subscription.current_period_end|date}}</div>
+                  {% endif %}
+                {% elif view.community.status == view.community.DEMO %}
+                <p><b>Plan: </b>Demonstration</p>
+                {% else %}
+                <p><b>Plan: </b>None</p>
+                {% endif %}
+
+                </div>            
+                </div>
+              </div>
+
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Community Settings</h6>
+                  <a class="btn btn-primary btn-sm" href="{% url 'community_edit' view.community.id %}"><i class="fas fa-edit"> </i> Edit</a>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                <div class="container-fluid">
+
+                <p><b>Name: </b>{{view.community.name}}</p>
+                <p><b>Icon: </b><img src="{{view.community.icon_path}}" /></p>
+
+                <p><i class="text-primary {% if view.community.suggest_tag %}fas fa-check-square{% else %}far fa-square{% endif %}"></i> Suggest Tags</p>
+                <p><i class="text-primary {% if view.community.suggest_company %}fas fa-check-square{% else %}far fa-square{% endif %}"></i> Suggest Companies</p>
+                <p><i class="text-primary {% if view.community.suggest_merge %}fas fa-check-square{% else %}far fa-square{% endif %}"></i> Suggest Member Merge</p>
+                <p><i class="text-primary {% if view.community.suggest_contribution %}fas fa-check-square{% else %}far fa-square{% endif %}"></i> Suggest Contributions</p>
+                <p><i class="text-primary {% if view.community.suggest_task %}fas fa-check-square{% else %}far fa-square{% endif %}"></i> Suggest Tasks</p>
+                </div>            
+
+                </div>
+              </div>
+
+            </div>
+            
+          </div>
+
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}
+
+{% block page_scripts %}
+
+{% endblock %}

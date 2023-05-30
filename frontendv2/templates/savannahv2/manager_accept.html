@@ -1,0 +1,59 @@
+{% extends "savannahv2/blank.html"%}
+{% load static %}
+
+
+{% block page_title %} | Accept Invitation{% endblock %}
+
+{% block page_content %}
+
+<!-- Login Card -->
+<div class="row mt-5 justify-content-center">
+<div class="col-xl-6 col-md-6 mb-8 mt-8 align-items-center">
+<center>
+    <div class="card shadow h-100 py-2">
+    <div class="card-body">
+        <div class="align-items-center">
+            {% if error %}
+            <h3>{{error}}</h3>
+            {% endif %}
+            {% if request.user.is_authenticated == False %}
+            <h3>You've been invited to manage {{view.community.name}}</h3>
+            <div>
+            <ul class="nav nav-tabs justify-content-center mb-2" id="localTab" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link {% if action != 'signup' %}active{% endif %}" id="login-tab" data-toggle="tab" href="#login" role="tab" aria-controls="login" aria-selected="true">Login</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if action == 'signup' %}active{% endif %}" id="signup-tab" data-toggle="tab" href="#signup" role="tab" aria-controls="signup" aria-selected="false">Signup</a>
+              </li>
+            </ul>
+            <div class="tab-content" id="localFormContent">
+              <div class="tab-pane fade {% if action != 'signup' %}show active{% endif %}" id="login" role="tabpanel" aria-labelledby="login-tab">
+                <form action="#" method="POST">
+                    {% csrf_token %}
+                    <table>
+                    {{ login_form }}
+                    </table>
+                    <button class="btn btn-primary" type="submit" name="action" value="login">Login</button>
+                </form>
+                <br /><br />
+              </div>
+              <div class="tab-pane fade {% if action == 'signup' %}show active{% endif %}" id="signup" role="tabpanel" aria-labelledby="signup-tab">
+                <form action="#" method="POST">
+                    {% csrf_token %}
+                    <table class="table">
+                    {{ signup_form }}
+                    </table>
+                    <button class="btn btn-primary" type="submit" name="action" value="signup">Signup</button>
+                </form>
+              </div>
+            </div>
+            {% endif %}
+        </div>
+        </div>
+    </div>
+    </div>
+</center>
+</div>
+</div>
+{% endblock %}

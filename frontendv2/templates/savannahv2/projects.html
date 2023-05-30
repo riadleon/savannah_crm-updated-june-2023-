@@ -1,0 +1,98 @@
+{% extends "savannahv2/base.html"%}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %} | {{view.community.name}} Projects{% endblock %}
+
+{% block page_alerts %}
+          {% if view.suggestion_count %}
+          <div class="alerts">
+              <div class="m-3 alert alert-info">You have <b>{{view.suggestion_count }}</b> <a href="{% url 'task_suggestions' view.community.id %}">task suggestion{% if view.suggestion_count > 1 %}s{% endif %}</a></div>
+          </div>
+          {% endif %}
+{% endblock %}
+
+{% block page_content %}
+        <!-- Page Heading -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Projects</h1>
+        <span>
+        <a class="btn btn-secondary" href="{% url 'projects_graph' community_id=view.community.id %}"><i class="fas fa-project-diagram"></i> Graph</a>
+        <a class="btn btn-success" href="{% url 'project_add' community_id=view.community.id %}"><i class="fas fa-plus"></i> Project</a>
+        </span>
+        </div>
+        
+          <!-- Content Row -->
+          <div class="row">
+            {% for project in view.all_projects %}
+
+            <!-- Content Column -->
+            <div id="project{{project.id}}" class="col-lg-6 mb-2">
+
+              <!-- Chart -->
+              <div class="card {% if project.default_project %}border-left-primary{% endif %} shadow mb-4" style="border-left: #{{project.color}} 0.25rem solid;">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary"><a href="{% url 'project_overview' view.community.id project.id %}"><i class="fas {% if project.default_project %}fa-globe{% else %}fa-tasks{% endif %}"></i> {{project.name}}</a></h6>
+                  <h6 class="m-0 font-weight-bold text-primary"><a href="{% url 'project_overview' view.community.id project.id %}">{{project.contrib_count}} Contributors</a></h6>
+                </div>
+                <div class="card-body">
+                  {% if project.default_project %}
+                    <p>Owner: {{project.community.owner}}</p>
+                    <p>Channels: All</p>
+                    {% if project.task_count > 0 %}<p>Open Tasks: {{project.task_count}}</p>{% endif %}
+                  {% else %}
+                    {% if project.owner %}<p>Owner: {{project.owner}}</p>{% endif %}
+                    {% if project.tag %}<p>Content: <span class="tag-pill" style="background-color: #{{project.tag.color}};"><span class="tag-text" style="color: #{{project.tag.color}}aa;">{{project.tag.name}}</span></span></p>{% endif %}
+                    {% if project.member_tag %}<p>Members: <span class="tag-pill" style="background-color: #{{project.member_tag.color}};"><span class="tag-text" style="color: #{{project.member_tag.color}}aa;">{{project.member_tag.name}}</span></span></p>{% endif %}
+                    {% if project.channels.all.count > 0 %}<p>Channels: {{project.channels.all.count}}</p>{% endif %}
+                    {% if project.task_count > 0 %}<p>Open Tasks: {{project.task_count}}</p>{% endif %}
+                  {% endif %}
+                </div>
+              </div>
+
+            </div>
+            {% endfor %}
+
+          </div>
+
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}
+
+{% block page_scripts %}
+  <script src="{% static 'vendor/chart-funnel.js/chart.funnel.js' %}"></script>
+
+{% for chart in view.all_charts %}
+  <script>
+var ctx = document.getElementById("projectChart{{chart.id}}");
+var myProjectChart = new Chart(ctx, {
+  type: 'funnel',
+  data: {
+    labels: {{chart.get_data_names|safe}},
+    datasets: [{
+      data: {{chart.get_data_values|safe}},
+      backgroundColor: {{chart.get_data_colors|safe}},
+      hoverBorderColor: "rgba(234, 236, 244, 1)",
+    }],
+  },
+  options: {
+    sort: 'asc',
+    maintainAspectRatio: false,
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: false,
+      caretPadding: 10,
+    },
+    legend: {
+      display: true
+    },
+  },
+});
+  </script>
+{% endfor %}
+{% endblock %}

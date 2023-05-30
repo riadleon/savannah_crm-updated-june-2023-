@@ -1,0 +1,282 @@
+{% extends "savannahv2/public/base.html"%}
+{% load static humanize member_utils %}
+
+{% block page_content %}
+          <!-- Content Row -->
+
+          <div class="row">
+
+            <!-- Area Chart -->
+            <div class="col-xl-8 col-lg-7">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-left">
+                  <h6 class="m-0 font-weight-bold text-primary">Contributions</h6>
+                  {% include 'savannahv2/filter_pills.html' %}
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-area">
+                    <canvas id="contributionsChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pie Chart -->
+            <div class="col-xl-4 col-lg-5">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">{{view.channels_chart.title}}</h6>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-pie pt-4 pb-2">
+                    <canvas id="{{view.channels_chart.id}}"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% if dashboard.show_members %}
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Recently Active -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Newest Contributors</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text"></span><span class="full-text">Date</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member, date in view.new_contributors %}
+                <tr>
+                  <td>
+                    {% if dashboard.show_companies %}{{member|avatar}}{% else %}{{member.avatar_url|icon}}{% endif %}
+                    {{ member.name }}
+                  </td>
+                  <td>{{date}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+            </div>
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Top Contributors -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Contributors</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">Contrib.</span><span class="full-text">Contributions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member, count in view.top_contributors %}
+                <tr>
+                  <td>
+                    {% if dashboard.show_companies %}{{member|avatar}}{% else %}{{member.avatar_url|icon}}{% endif %}
+                    {{ member.name }}
+                  </td>
+                  <td>{{count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Top Supporters -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Supporter <a href="https://docs.savannahhq.com/pages/contributions/#supporters-and-enablers" target="_blank" data-toggle="tooltip" title="The supporting score is the number of conversations a member has had with somebody who has made a contribution within the selected time frame."><i class="fas fa-question-circle">&nbsp;</i></a></h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">Conv.</span><span class="full-text">Conversations</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member, convo_count in view.top_supporters %}
+                <tr>
+                  <td>
+                    {% if dashboard.show_companies %}{{member|avatar}}{% else %}{{member.avatar_url|icon}}{% endif %}
+                    {{ member.name }}
+                  </td>
+                  <td>{{convo_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Top Enablers -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Enablers <a href="https://docs.savannahhq.com/pages/contributions/#supporters-and-enablers" target="_blank" data-toggle="tooltip" title="The enabler score is the number of contributors that a member has had any conversations with in the lead up to their contribution."><i class="fas fa-question-circle">&nbsp;</i></a></h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">Conn.</span><span class="full-text">Contributors</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member, convo_count in view.top_enablers %}
+                <tr>
+                  <td>
+                    {% if dashboard.show_companies %}{{member|avatar}}{% else %}{{member.avatar_url|icon}}{% endif %}
+                    {{ member.name }}
+                  </td>
+                  <td>{{convo_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+          {% endif %}
+
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}
+
+{% block page_scripts %}
+  <script>
+// Area Chart Example
+var ctx = document.getElementById("contributionsChart");
+var myLineChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: {{view.contributions_chart_months|safe}},
+    datasets: [{
+      label: "Contributions",
+      lineTension: 0.3,
+      backgroundColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}22",
+      borderColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      borderWidth: 1,
+      pointRadius: 0,
+      pointBackgroundColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      pointBorderColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      pointHoverRadius: 3,
+      pointHoverBackgroundColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      pointHoverBorderColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      data: {{view.contributions_chart_counts|safe}},
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        left: 10,
+        right: 25,
+        top: 25,
+        bottom: 0
+      }
+    },
+    scales: {
+      xAxes: [{
+        time: {
+          unit: 'date'
+        },
+        gridLines: {
+          display: false,
+          drawBorder: true
+        },
+        ticks: {
+          maxTicksLimit: 7
+        }
+      }],
+      yAxes: [{
+        ticks: {
+          maxTicksLimit: 5,
+          padding: 10,
+          beginAtZero: true,
+          // Include a dollar sign in the ticks
+          callback: function(value, index, values) {
+            return value;
+          }
+        },
+        gridLines: {
+          color: "rgb(234, 236, 244)",
+          zeroLineColor: "rgb(234, 236, 244)",
+          drawBorder: true,
+          borderDash: [2],
+          zeroLineBorderDash: [2]
+        }
+      }],
+    },
+    legend: {
+      display: false
+    },
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      titleMarginBottom: 10,
+      titleFontColor: '#6e707e',
+      titleFontSize: 14,
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: true,
+      intersect: false,
+      mode: 'index',
+      caretPadding: 10,
+      callbacks: {
+        label: function(tooltipItem, chart) {
+          var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+          return datasetLabel + ': ' + tooltipItem.yLabel;
+        }
+      }
+    }
+  }
+});
+  </script>
+
+{% endblock %}

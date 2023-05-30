@@ -1,0 +1,390 @@
+{% extends "savannahv2/base.html"%}
+{% load static humanize member_utils %}
+
+{% block page_title %} | {{view.community.name}} Contributions{% endblock %}
+
+{% block page_alerts %}
+          {% if view.suggestion_count %}
+          <div class="alerts">
+              <div class="m-3 alert alert-info">You have <b>{{view.suggestion_count }}</b> <a href="{% url 'conversation_as_contribution_suggestions' view.community.id %}">contribution suggestion{{view.suggestion_count|pluralize}}</a></div>
+          </div>
+          {% endif %}
+{% endblock %}
+
+{% block page_content %}
+          <!-- Page Heading -->
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Contributions</h1>
+            {% include 'savannahv2/filter_button.html' with current_tag=view.tag%}
+            <a class="btn btn-light text-muted" title="Share Dashboard" href="{% url 'publish_contributions' view.community.id %}"><i class="fas fa-share-alt"></i></a>
+          </div>
+
+          <!-- Content Row -->
+
+          <div class="row">
+
+            <!-- Area Chart -->
+            <div class="col-xl-8 col-lg-7">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-left">
+                  <h6 class="m-0 font-weight-bold text-primary">Contributions</h6>
+                  {% include 'savannahv2/filter_pills.html' %}
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-area">
+                    <canvas id="contributionsChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pie Chart -->
+            <div class="col-xl-4 col-lg-5">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">{{view.channels_chart.title}}</h6>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-pie pt-4 pb-2">
+                    <canvas id="{{view.channels_chart.id}}"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Recently Active -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Newest Contributors</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text"></span><span class="full-text">Date</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member, date in view.new_contributors %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=member.tags.all %}
+                  </td>
+                  <td>{{date}}</td>
+                </tr>
+                {% if forloop.last and forloop.counter == 10 %}
+                <tr>
+                  <td colspan="2" align="center">
+                    <a href ="{% url 'contributors' view.community.id %}?sort=-first_contrib"><b>More...</b></a>
+                  </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+            </div>
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Top Contributors -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Contributors</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">Contrib.</span><span class="full-text">Contributions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member, count in view.top_contributors %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=member.tags.all %}
+                  </td>
+                  <td>{{count}}</td>
+                </tr>
+                {% if forloop.last and forloop.counter == 10 %}
+                <tr>
+                  <td colspan="2" align="center">
+                    <a href ="{% url 'contributors' view.community.id %}?sort=-contrib_count"><b>More...</b></a>
+                  </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Top Supporters -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Supporter <a href="https://docs.savannahhq.com/pages/contributions/#supporters-and-enablers" target="_blank" data-toggle="tooltip" title="The supporting score is the number of conversations a member has had with somebody who has made a contribution within the selected time frame."><i class="fas fa-question-circle">&nbsp;</i></a></h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">Conv.</span><span class="full-text">Conversations</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member, convo_count in view.top_supporters %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=member.tags.all %}
+                  </td>
+                  <td>{{convo_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Top Enablers -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Enablers <a href="https://docs.savannahhq.com/pages/contributions/#supporters-and-enablers" target="_blank" data-toggle="tooltip" title="The enabler score is the number of contributors that a member has had any conversations with in the lead up to their contribution."><i class="fas fa-question-circle">&nbsp;</i></a></h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">Conn.</span><span class="full-text">Contributors</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member, convo_count in view.top_enablers %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=member.tags.all %}
+                  </td>
+                  <td>{{convo_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-12 mb-4">
+
+              <!-- All Contributions -->
+              <a name="contributions" />
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Contributions</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Channel</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Author</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for contribution in view.all_contributions %}
+                <tr>
+                  <td class="text-nowrap">
+                  <i class="{{contribution.source_icon}}"></i> 
+                  {% if contribution.channel_name %}
+                    {{contribution.channel_name}}
+                  {% else %}
+                    {{ contribution.source_name }}
+                  {% endif %}
+                  </td>
+                  <td>{{contribution.timestamp}}</td>
+                  <td>
+                    <a target="_blank" href="{{contribution.location|default:"#"}}">{{ contribution.title }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=contribution.tags.all %}
+                  </td>
+                  <td>{% if contribution.author_name %}<a href="{% url 'member_profile' contribution.author_id %}">{{contribution.author_name}}</a>{% endif %}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+
+                {% if view.has_pages %}
+                <nav aria-label="Contribution table pages">
+                  <ul class="pagination justify-content-center">
+                    <li class="page-item {% if view.page <= 1 %}disabled{% endif %}">
+                      <a class="page-link" href="?{% if view.search %}search={{view.search}}&{% endif %}page=1#contributions" aria-label="First">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                      </a>
+                    </li>
+                    {% for page in view.page_links %}
+                      <li class="page-item{% if view.page == page %} active{% endif %}"><a class="page-link" href="?{% if view.search %}search={{view.search}}&{% endif %}page={{page}}#contributions">{{page}}</a></li>
+                    {% endfor %}
+                    <li class="page-item{% if view.page >= view.last_page %} disabled{% endif %}">
+                      <a class="page-link" href="?{% if view.search %}search={{view.search}}&{% endif %}page={{view.last_page}}#contributions" aria-label="Last">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">{{Next}}</span>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+                {% endif %}
+                <div class="d-flex justify-content-center mb-2">
+                {{view.page_start}} - {{view.page_end}} of {{ view.result_count|intcomma }} Contributions
+                </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}
+
+{% block page_scripts %}
+  <script>
+// Area Chart Example
+var ctx = document.getElementById("contributionsChart");
+var myLineChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: {{view.contributions_chart_months|safe}},
+    datasets: [{
+      label: "Contributions",
+      lineTension: 0.3,
+      backgroundColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}22",
+      borderColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      borderWidth: 1,
+      pointRadius: 0,
+      pointBackgroundColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      pointBorderColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      pointHoverRadius: 3,
+      pointHoverBackgroundColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      pointHoverBorderColor: "#{{view.tag.color|default:colors.CONTRIBUTION}}",
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      data: {{view.contributions_chart_counts|safe}},
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        left: 10,
+        right: 25,
+        top: 25,
+        bottom: 0
+      }
+    },
+    scales: {
+      xAxes: [{
+        time: {
+          unit: 'date'
+        },
+        gridLines: {
+          display: false,
+          drawBorder: true
+        },
+        ticks: {
+          maxTicksLimit: 7
+        }
+      }],
+      yAxes: [{
+        ticks: {
+          maxTicksLimit: 5,
+          padding: 10,
+          beginAtZero: true,
+          // Include a dollar sign in the ticks
+          callback: function(value, index, values) {
+            return value;
+          }
+        },
+        gridLines: {
+          color: "rgb(234, 236, 244)",
+          zeroLineColor: "rgb(234, 236, 244)",
+          drawBorder: true,
+          borderDash: [2],
+          zeroLineBorderDash: [2]
+        }
+      }],
+    },
+    legend: {
+      display: false
+    },
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      titleMarginBottom: 10,
+      titleFontColor: '#6e707e',
+      titleFontSize: 14,
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: true,
+      intersect: false,
+      mode: 'index',
+      caretPadding: 10,
+      callbacks: {
+        label: function(tooltipItem, chart) {
+          var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+          return datasetLabel + ': ' + tooltipItem.yLabel;
+        }
+      }
+    }
+  }
+});
+  </script>
+
+{% endblock %}

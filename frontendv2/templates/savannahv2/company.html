@@ -1,0 +1,466 @@
+{% extends "savannahv2/base.html"%}
+{% load static simple_math simple_dates member_utils %}
+
+{% block page_title %} | {{view.company.name}}{% endblock %}
+
+{% block page_content %}
+          <!-- Page Heading -->
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">{{view.company.logo_url|icon:"img/company-default.png"}}{{view.company.name}}</h1>
+          </div>
+
+          <!-- Content Row -->
+
+          <div class="row">
+
+            <!-- Profile  -->
+            <div class="col-xl-8 col-lg-7">
+
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Profile</h6>
+                  <a class="text-gray-500" href="{% url 'company_edit' view.company.id %}"><i class="fas fa-edit"> </i>Edit</a>
+                    
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                <div class="container-fluid">
+                  <div class="row mb-2">
+                    <div class="mb-2 col-lg-2 font-weight-bold">Active</div>
+                    <div class="mb-2 col-lg-10">{{view.company.first_seen|date|default:''}} - {{view.company.last_seen|date|default:''}}</div>
+                  </div>
+                  {% if view.company.website %}
+                  <div class="row mb-2">
+                    <div class="mb-2 col-lg-2 font-weight-bold">Website</div>
+                    <div class="mb-2 col-lg-10">
+                      <a href="{{view.company.website}}" target="_blank">{{view.company.website}}</a>
+                    </div>
+                  </div>
+                  {% endif %}
+                  <div class="row mb-2">
+                    <div class="mb-2 col-lg-2 font-weight-bold">Tag</div>
+                    <div class="mb-2 col-lg-10">
+                      <span class="tag_form_dropdown dropdown no-arrow">
+                        <a class="dropdown-toggle tag_row" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {% if view.company.tag %}
+                          <span class="tag-pill" style="background-color: #{{view.company.tag.color}};"><span class="tag-text" style="color: #{{view.company.tag.color}}aa;">{{view.company.tag.name}}</span></span>
+                        {% else %}
+                          <i class="fas fa-tag text-gray-500"> </i>
+                        {% endif %}
+                        </a>
+                        <div class="mb-0 dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                          <div class="dropdown-header">Tags:</div>
+                          <form action="#" method="POST" class="form tag_form">
+                          {% csrf_token %}
+                          <input type="hidden" name="company_id" value="{{view.company.id}}"/>
+                          <div class="dropdown-item" style=""><input id="company_{{view.company.id}}_tag_clear" name="tag_select" value="" class="p-2 tag_select form-check-input" type="radio" {% if not view.company.tag %}checked="1"{% endif %}><label class="form-check-label" for="company_{{view.company.id}}_tag_clear">None</label></div>
+                          {% for tag in view.community.tag_set.all %}
+                          <div class="dropdown-item" style="background-color: #{{tag.color}};"><input id="company_{{view.company.id}}_tag_{{tag.id}}" name="tag_select" value="{{tag.id}}" class="p-2 tag_select form-check-input" type="radio" {% if tag.id == view.company.tag.id %}checked="1"{% endif %}><label class="form-check-label" for="company_{{view.company.id}}_tag_{{tag.id}}"><span style="color:#{{tag.color}}aa;" class="tag-text">{{tag.name}}</span></label></div>
+                          {% endfor %}
+                          </form>
+                        </div>
+                      </span>
+                    </div>
+                  </div>
+                  {% if view.company.domains.count %}
+                  <div class="row mb-2">
+                    <div class="mb-2 col-lg-2 font-weight-bold">Domains</div>
+                    <div class="mb-2 col-lg-10"><i class="far fa-envelope"></i> 
+                    {% for domain in view.company.domains.all %}
+                      {{domain.domain}}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+                  {% if view.company.groups.count %}
+                  <div class="row mb-2">
+                    <div class="mb-2 col-lg-2 font-weight-bold">Sources</div>
+                    <div class="mb-2 col-lg-10">
+                      {% for group in view.company.groups.all %}
+                      {% if group.get_external_url %}
+                        <a href="{{group.get_external_url}}" target="_blank"><i class="{{group.source.icon_name}}"></i> {{group.name}}</a>
+                      {% else %}
+                        <i class="{{group.source.icon_name}}"></i> {{group.name}}
+                      {% endif %}
+                      {% if not forloop.last %}<br/>{% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+                  {% if view.all_notes.count > 0 %}
+                  <div class="row mb-2">
+                    <div class="mb-2 col-lg-2 font-weight-bold">Notes</div>
+                    <div class="mb-2 col-lg-10">
+                      {% for note in view.all_notes %}
+                        <div id="id_note_div_{{note.id}}" class="mb-2">
+                        <span class="small font-weight-bold text-nowrap"><a href="{% url 'member_profile' note.member.id %}">{{note.member}}</a> - {{note.timestamp.date}}</span>
+                        <br/>
+                        <span id="id_note_{{note.id}}" data-note_id="{{note.id}}">{{note.content|linebreaksbr}}</span>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+
+                </div>
+                </div>
+              </div>
+
+              <!-- Content Row -->
+              <div class="row">
+
+                <!-- Tags Chart -->
+                <div class="col-lg-6">
+                  <div class="card shadow mb-4">
+                    <!-- Card Header - Dropdown -->
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                      <h6 class="m-0 font-weight-bold text-primary">{{view.tagsChart.title}}</h6>
+                    </div>
+                    <!-- Card Body -->
+                    <div class="card-body">
+                      <div class="chart-area">
+                        <canvas id="{{view.tagsChart.id}}"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sources Chart -->
+                <div class="col-lg-6">
+                  <div class="card shadow mb-4">
+                    <!-- Card Header - Dropdown -->
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                      <h6 class="m-0 font-weight-bold text-primary">{{view.sourcesChart.title}}</h6>
+                    </div>
+                    <!-- Card Body -->
+                    <div class="card-body">
+                      <div class="chart-area">
+                        <canvas id="{{view.sourcesChart.id}}"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Content Row -->
+              <div class="row">
+
+                <!-- Area Chart -->
+                <div class="col-lg-12">
+                  <div class="card shadow mb-4">
+                    <!-- Card Header - Dropdown -->
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                      <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                    </div>
+                    <!-- Card Body -->
+                    <div class="card-body">
+                      <div class="chart-area">
+                        <canvas id="engagementChart"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+
+              </div>
+
+            </div>
+
+            
+            <div class="col-xl-4 col-lg-5">
+
+            <!-- Members List -->
+            <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Recent Members</h6>
+                  <a class="text-gray-500" href="{% url 'company_merge' view.company.id %}" title="Merge"><i class="fas fa-people-arrows"></i></a>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="ml-3">
+                  {% for member in view.recent_members %}
+                    <div class="mb-3">
+                      {{member|avatar_icon}}
+                      <a href="{% url 'member_profile' member.id %}">{{member}}</a>
+                      {% include 'savannahv2/tag_list.html' with tags=member.tags.all %}
+                      <br/><small class="muted">{{member.first_seen|date|default:''}} - {{member.last_seen|date|default:''}}</small>
+                      {% if member.default_level %}
+                      <br/>
+                      <a href="{% url 'project_overview' view.community.id member.default_level.project_id %}" title="{{member.default_level.level_name}}">
+                      {% if member.default_level.level == member.default_level.CORE %}
+                      <img src="{% static 'savannah/progression_core.png' %}" />
+                      {% elif member.default_level.level == member.default_level.CONTRIBUTOR %}
+                      <img src="{% static 'savannah/progression_contrib.png' %}" />
+                      {% elif member.default_level.level == member.default_level.PARTICIPANT %}
+                      <img src="{% static 'savannah/progression_participant.png' %}" />
+                      {% elif member.default_level.level == member.default_level.USER %}
+                      <img src="{% static 'savannah/progression_visitor.png' %}" />
+                      {% endif %}
+                      </a>
+                      {% endif %}
+                    </div>
+                    {% if forloop.last and forloop.counter == 10 %}
+                      <div class="mb-3 text-center"><a href="{% url 'all_members' view.community.id %}?clear=all&member_company={{view.company.id}}"><b>View All Members</b></a></div>
+                    {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top Connections-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Connections</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th class="text-right" scope="col">Connections</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for connection in view.top_connections %}
+                <tr>
+                  <td>
+                    {{connection.to_member|avatar}}
+                    <a href="{% url 'member_profile' connection.to_member.id %}">{{ connection.to_member.name }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=member.tags.all %}
+                  </td>
+                  <td class="text-right pr-4">{{connection.connection_sum}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-12 mb-4">
+
+              <!-- Most Active Users-->
+              <a name="conversations" />
+              <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Conversations</h6>
+          <form class="d-none d-sm-inline-block form-inline" action="#conversations" method="GET">
+            <div class="input-group">
+              <input name="conversation_search" type="text" class="form-control small" placeholder="Search..." value="{{view.conversation_search|default:''}}" aria-label="Search" aria-describedby="basic-addon2">
+              <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">
+                  <i class="fas fa-search fa-sm"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Channel</th>
+                    <th scope="col">Speaker</th>
+                    <th scope="col">Content</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for conversation in view.all_conversations %}
+                <tr>
+                  <td class="text-nowrap">{{conversation.timestamp|dateortime}}</td>
+                  <td class="text-nowrap"><i class="{{conversation.channel.source.icon_name}}" title="{{conversation.source.name}}"></i> {{conversation.channel.name}}</td>
+                  <td>{% if conversation.speaker %}<a href="{% url 'member_profile' conversation.speaker.id %}">{{conversation.speaker.name}}</a>{% endif %}</td>
+                  <td>
+                    <a target="_blank" href="{{conversation.location|default:'#'}}" data-toggle="tooltip" data-placement="right" title="{{conversation.content}}">{{ conversation }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=conversation.tags.all %}
+                  </td>
+                  <td>
+                  {% for participant in conversation.participants.all %}
+                    {% if participant.id != conversation.speaker.id %}
+                      <a href="{% url 'member_profile' participant.id %}">{{participant.name}}</a><br/>
+                    {% endif %}
+                  {% endfor %}
+                  </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+
+                {% if view.has_pages %}
+                <nav aria-label="Conversations table pages">
+                  <ul class="pagination justify-content-center">
+                    <li class="page-item {% if view.page <= 1 %}disabled{% endif %}">
+                      <a class="page-link" href="?{% if view.conversation_search %}conversation_search={{view.conversation_search}}&{% endif %}page=1#conversations" aria-label="First">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                      </a>
+                    </li>
+                    {% for page in view.page_links %}
+                      <li class="page-item{% if view.page == page %} active{% endif %}"><a class="page-link" href="?{% if view.conversation_search %}conversation_search={{view.conversation_search}}&{% endif %}page={{page}}#conversations">{{page}}</a></li>
+                    {% endfor %}
+                    <li class="page-item{% if view.page >= view.last_page %} disabled{% endif %}">
+                      <a class="page-link" href="?{% if view.conversation_search %}conversation_search={{view.conversation_search}}&{% endif %}page={{view.last_page}}#conversations" aria-label="Last">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">{{Next}}</span>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+                {% endif %}
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}
+
+{% block page_scripts %}
+  <script>
+$('.tag_form_dropdown').on('hide.bs.dropdown', function (e) {
+    var tags = e.relatedTarget.parentElement.getElementsByClassName("tag_select");
+    var tags_html = "";
+    for (var i = 0; i < tags.length; i++){
+        var tag = tags[i];
+        if (tag.checked) {
+          var tag_name = tag.labels[0].textContent;
+          if (tag.value == '') {
+            tags_html = "<i class=\"fas fa-tag text-gray-500\"> </i>";
+          } else {
+            tags_html = '<span class="tag-pill" style="background-color: '+tag.parentNode.style.backgroundColor+';"><span class="tag-text" style="color: '+tag.parentNode.style.backgroundColor+';">'+tag_name+'</span></span>'
+          }
+
+        }
+    }
+    var tag_form = e.relatedTarget.parentElement.getElementsByClassName('tag_form')[0];
+    $.post( "{% url 'company_tag_form' view.community.id %}", $(tag_form).serialize(), function(data) {
+        var tag_row = e.relatedTarget.parentElement.getElementsByClassName("tag_row")[0];
+        tag_row.innerHTML = tags_html
+      },
+      'json' // I expect a JSON response
+    );
+});
+  </script>
+  <script>
+// Area Chart Example
+var ctx = document.getElementById("engagementChart");
+var myLineChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: {{view.engagement_chart_months|safe}},
+    datasets: [{
+      label: "Conversations",
+      lineTension: 0.3,
+      backgroundColor: "#{{colors.CONVERSATION}}22",
+      borderColor: "#{{colors.CONVERSATION}}",
+      pointRadius: 1,
+      pointBackgroundColor: "#{{colors.CONVERSATION}}",
+      pointBorderColor: "#{{colors.CONVERSATION}}",
+      pointHoverRadius: 3,
+      pointHoverBackgroundColor: "#{{colors.CONVERSATION}}",
+      pointHoverBorderColor: "#{{colors.CONVERSATION}}",
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      data: {{view.engagement_chart_conversations|safe}},
+    },
+    {
+      label: "Contributions",
+      lineTension: 0.3,
+      backgroundColor: "#{{colors.CONTRIBUTION}}22",
+      borderColor: "#{{colors.CONTRIBUTION}}",
+      pointRadius: 1,
+      pointBackgroundColor: "#{{colors.CONTRIBUTION}}",
+      pointBorderColor: "#{{colors.CONTRIBUTION}}",
+      pointHoverRadius: 3,
+      pointHoverBackgroundColor: "#{{colors.CONTRIBUTION}}",
+      pointHoverBorderColor: "#{{colors.CONTRIBUTION}}",
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      data: {{view.engagement_chart_activities|safe}},
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        left: 10,
+        right: 25,
+        top: 25,
+        bottom: 0
+      }
+    },
+    scales: {
+      xAxes: [{
+        time: {
+          unit: 'date'
+        },
+        gridLines: {
+          display: false,
+          drawBorder: false
+        },
+        ticks: {
+          maxTicksLimit: 7
+        }
+      }],
+      yAxes: [{
+        ticks: {
+          maxTicksLimit: 5,
+          padding: 10,
+          beginAtZero: true,
+          // Include a dollar sign in the ticks
+          callback: function(value, index, values) {
+            return value;
+          }
+        },
+        gridLines: {
+          color: "rgb(234, 236, 244)",
+          zeroLineColor: "rgb(234, 236, 244)",
+          drawBorder: false,
+          borderDash: [2],
+          zeroLineBorderDash: [2]
+        }
+      }],
+    },
+    legend: {
+      display: true
+    },
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      titleMarginBottom: 10,
+      titleFontColor: '#6e707e',
+      titleFontSize: 14,
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: false,
+      intersect: false,
+      mode: 'index',
+      caretPadding: 10,
+      callbacks: {
+        label: function(tooltipItem, chart) {
+          var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+          return datasetLabel + ': ' + tooltipItem.yLabel;
+        }
+      }
+    }
+  }
+});
+  </script>
+
+{% endblock %}

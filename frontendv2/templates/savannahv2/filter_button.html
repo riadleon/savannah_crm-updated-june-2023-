@@ -1,0 +1,193 @@
+          <span id="filter-bar" class="">
+
+            {% if view.search %}
+            <span class="btn btn-secondary"><i class="fas fa-search"></i> "{{view.search|truncatechars:64}}" <a class="text-muted" href="?search="><i class="fas fa-times"></i></a></span>
+            {% endif %}
+            {% if view.conversation_search %}
+            <span class="btn btn-secondary"><i class="fas fa-search"></i> "{{view.conversation_search|truncatechars:64}}" <a class="text-muted" href="?conversation_search="><i class="fas fa-times"></i></a></span>
+            {% endif %}
+            {% if view.filter_link %}
+            <span class="btn btn-secondary"><i class="fas fa-link"></i> {{view.filter_link.url|truncatechars:64}} <a class="text-muted" href="?link="><i class="fas fa-times"></i></a></span>
+            {% endif %}
+
+            {% if view.filter.timespan %}
+            <span class="dropdown display-children-on-hover">
+            {% if view.timefilter == 'timespan' and view.timespan == view.MAX_TIMESPAN %}
+              {% if view.MAX_TIMESPAN == 365 %}
+              <button class="btn btn-light text-muted dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-calendar"></i> <span class="display-on-parent-hover">Past Year</span></button>
+              {% else %}
+              <button class="btn btn-light text-muted dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-calendar"></i> Time Range</button>
+              {% endif %}
+            {% elif view.timefilter == 'range' %}
+              <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="{{view.timespan_icon}}"></i> {{view.rangestart|date}}{% if view.rangestart.date != view.rangeend.date %} - {{view.rangeend|date}}{% endif %}</button>
+            {% else %}
+              <button style="white-space:nowrap;" class="btn dropdown-toggle btn-secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="{{view.timespan_icon}}"></i> {{view.timespan_display}}</button>
+            {% endif %}
+              <div class="dropdown-menu animated--fade-in " aria-labelledby="dropdownMenuButton" style="min-width: 20rem;">
+                    {% if view.MAX_TIMESPAN != 365 %}
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}timespan={{view.MAX_TIMESPAN}}"><i class="fas fa-calendar"></i> Max Range</a>
+                    {% endif %}
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}timespan=365"><i class="fas fa-calendar"></i> Past Year</a>
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}timespan=183"><i class="fas fa-calendar"></i> 6 Months</a>
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}timespan=90"><i class="fas fa-calendar-alt"></i> 90 Days</a>
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}timespan=30"><i class="fas fa-calendar-alt"></i> 30 Days</a>
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}timespan=7"><i class="fas fa-calendar-week"></i> Last Week</a>
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}timespan=1"><i class="fas fa-calendar-day"></i> Today</a>
+                    {% if view.filter.custom_timespan %}
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-header">Custom Range</div>
+                    <form method="GET" action="" class="input-group input-daterange pr-1 pl-1">
+                        <input type="text" class="form-control text-sm" name="rangestart" value="{% if view.timefilter == 'range'%}{{view.rangestart|date:'Y-m-d'}}{% endif %}">
+                        <div class="input-group-append"><span class="input-group-text" id="basic-addon2">to</span></div>
+                        <input type="text" class="form-control" name="rangeend" value="{% if view.timefilter == 'range'%}{{view.rangeend|date:'Y-m-d'}}{% endif %}">
+                        <div class="input-group-append"><button class="btn btn-primary btn-sm input-group-text" type="submit"><i class="fas fa-chevron-right"> </i></button></div>
+                    </form>             
+                    {% endif %}
+              </div>
+            </span>
+          {% endif %}
+
+          {% if view.filter.member %}
+          <!-- Member -->
+            <span class="dropdown display-children-on-hover">
+            {% if view.role or view.member_tag or view.member_company %}
+                <button class="btn {% if view.member_tag %}{% elif view.role %}btn-secondary{% elif view.member_company and view.filter.member_company %}btn-secondary{% endif %} dropdown-toggle" {% if view.member_tag %}style="white-space:nowrap; background-color: #{{view.member_tag.color}};"{% endif %} type="button" id="memberFilterButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span {% if view.member_tag %}style="color: #{{view.member_tag.color}}aa" class="tag-text"{% endif %}><i class="{% if view.role == "community"%}fas fa-user{% elif view.role == "staff" %}fas fa-user-tie{% elif view.role == "bot" %}fas fa-ban{% elif view.member_company and view.filter.member_company %}fas fa-building{% else %}fas fa-users{% endif %}"></i> {% if view.member_company and view.filter.member_company %}{{view.member_company.name}}{% elif view.member_tag %}{{view.member_tag.name}}{% elif view.role == "community"%}Community{% elif view.role == "staff" %}Staff{% elif view.role == "bot" %}Bots{% else %}Members{% endif %}</span></button>
+            {% else %}
+                <button class="btn btn-light text-muted dropdown-toggle" type="button" id="memberFilterButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-users"></i> <span class="display-on-parent-hover">Members</span></button>
+            {% endif %}
+              <ul class="dropdown-menu dropdown-menu-end animated--fade-in p-2" aria-labelledby="memberFilterButton">
+                <li><a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}role=&member_tag={% if view.filter.member_company %}&member_company={% endif %}"><i class="fas fa-times"></i> All Members</a></li>
+                <li class="dropdown-divider p-0"></li>
+
+                <li class="dropdown-submenu pull-left">
+                  {% if view.role %}
+                    <a class="bg-secondary text-light dropdown-item dropend p-2" href="#"><i class="{% if view.role == "community"%}fas fa-user{% elif view.role == "staff" %}fas fa-user-tie{% else %}fas fa-ban{% endif %}"></i> {% if view.role == "community"%}Community{% elif view.role == "staff" %}Staff{% else %}Bots{% endif %}</a>
+                  {% else %}
+                    <a class="dropdown-item dropend p-2" href="#"><i class="fas fa-users"></i> Roles</a>
+                  {% endif %}
+                  <ul class="dropdown-menu" >
+                    <li><a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}role="><i class="fas fa-users"></i> All Roles</a></li>
+                    <li class="dropdown-divider p-0"></li>
+                    <li><a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}role=community"><i class="fas fa-user"></i> Community Only</a></li>
+                    <li><a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}role=staff"><i class="fas fa-user-tie"></i> Staff Only</a></li>
+                    <li><a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}role=bot"><i class="fas fa-ban"></i> Exclude Bots</a></li>
+                  </ul>
+                </li>
+
+                {% if view.filter.member_tag %}
+                <li class="dropdown-submenu pull-left">
+                  {% if view.member_tag %}
+                    <a class="dropdown-item dropend p-2" href="#" style="white-space:nowrap; background-color: #{{view.member_tag.color}};"><span style="color: #{{view.member_tag.color}}aa !important" class="tag-text"><i class="fas fa-tag"></i> {{view.member_tag.name}}</span></a>
+                  {% else %}
+                    <a class="dropdown-item dropend p-2" href="#"><i class="fas fa-tags"></i> Tag</a>
+                  {% endif %}
+                  <ul class="dropdown-menu" >
+                    <li><a style="white-space:nowrap; color:#5a5c69;" class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}member_tag="><i class="fas fa-tags"></i> Any Tags</a></li>
+                    <li class="dropdown-divider p-0"></li>
+                    {% for tag in view.community.tag_set.all %}
+                    <li><a style="white-space:nowrap; background-color: #{{tag.color}};" class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}member_tag={{tag.name}}"><span style="color: #{{tag.color}}aa" class="tag-text"><i class="fas fa-hashtag"></i> {{tag.name}}</span></a></li>
+                    {% endfor %}
+                  </ul>
+                </li>
+                {% endif %}
+
+                {% if view.filter.member_company %}
+                <li class="dropdown-submenu pull-left">
+                  {% if view.member_company %}
+                    <a class="bg-secondary text-light dropdown-item dropend p-2" href="#"><i class="fas fa-building"></i> {{view.member_company.name}}</a>
+                  {% else %}
+                    <a class="dropdown-item dropend p-2" href="#"><i class="fas fa-city"></i> Company</a>
+                  {% endif %}
+                  <ul class="dropdown-menu" >
+                    <li><a style="white-space:nowrap; color:#5a5c69;" class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}member_company="><i class="fas fa-city"></i> Any Company</a></li>
+                    <li class="dropdown-divider p-0"></li>
+                    {% for company in view.filter_button_companies %}
+                    <li><a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}member_company={{company.id}}"><i class="fas {% if company.is_staff %}fa-user-tie{% else %}fa-building{% endif %}"></i> {{company.name}}</a></li>
+                    {% endfor %}
+                  </ul>
+                </li>
+                {% endif %}
+
+              </ul>
+            </span>
+          {% endif %}
+
+          {% if view.filter.source or view.filter.tag %}
+          <!-- Tag -->
+            <span class="dropdown display-children-on-hover">
+            {% if view.tag or view.source %}
+                <button class="btn {% if view.tag %}{% else %}btn-secondary{% endif %} dropdown-toggle" {% if view.tag %}style="white-space:nowrap; background-color: #{{view.tag.color}};"{% endif %} type="button" id="memberFilterButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span {% if view.tag %}style="color: #{{view.tag.color}}aa" class="tag-text"{% endif %}>{% if view.exclude_source %}<span class="fa-stack small"><i class="{{view.source.icon_name}} fa-stack-1x"></i><i class="fas fa-ban fa-stack-2x"></i></span>{% else %}<i class="{% if view.source  %}{{view.source.icon_name}}{% elif view.tag %}fas fa-comment{% else %}fas fa-comment{% endif %}"></i>{% endif %} {% if view.tag %}{{view.tag.name}}{% elif view.source %}{{view.source.name}}{% else %}<span class="display-on-parent-hover">Content</span>{% endif %}</span></button>
+            {% else %}
+              <button class="btn btn-light text-muted dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-comment"></i> <span class="display-on-parent-hover">Content</span></button>
+            {% endif %}
+              <ul class="dropdown-menu dropdown-menu-end animated--fade-in p-2" aria-labelledby="memberFilterButton">
+                <li><a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}&tag=&source=&channel="><i class="fas fa-times"></i> All Content</a></li>
+                <li class="dropdown-divider p-0"></li>
+
+                {% if view.filter.tag %}
+                <li class="dropdown-submenu pull-left">
+                  {% if view.tag %}
+                    <a class="dropdown-item dropend p-2" href="#" style="white-space:nowrap; background-color: #{{view.tag.color}};"><span style="color: #{{view.tag.color}}aa !important" class="tag-text"><i class="fas fa-tag"></i> {{view.tag.name}}</span></a>
+                  {% else %}
+                    <a class="dropdown-item dropend p-2" href="#"><i class="fas fa-tags"></i> Tag</a>
+                  {% endif %}
+                  <ul class="dropdown-menu" >
+
+                    <li><a style="white-space:nowrap; color:#5a5c69;" class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}tag="><i class="fas fa-tags"></i> Any Tags</a></li>
+                    <li class="dropdown-divider p-0"></li>
+                    {% for tag in view.community.tag_set.all %}
+                    <li><a style="white-space:nowrap; background-color: #{{tag.color}};" class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}tag={{tag.name}}"><span style="color: #{{tag.color}}aa" class="tag-text"><i class="fas fa-tag"></i> {{tag.name}}</span></a></li>
+                    {% endfor %}
+                  </ul>
+                </li>
+                {% endif %}
+
+                {% if view.filter.source %}
+                <li class="dropdown-submenu pull-left">
+                  {% if view.source %}
+                    <a class="bg-secondary text-light dropdown-item dropend p-2" href="#">{% if view.exclude_source %}<span class="fa-stack small"><i class="{{view.source.icon_name}} fa-stack-1x"></i><i class="fas fa-ban fa-stack-2x"></i></span>{% else %}<i class="{{view.source.icon_name}}"> </i>{% endif %} {{view.source.name}}</a>
+                  {% else %}
+                    <a class="dropdown-item dropend p-2" href="#"><i class="fas fa-filter"></i> Source</a>
+                  {% endif %}
+                  <ul class="dropdown-menu" >
+
+                    <li><a style="white-space:nowrap; color:#5a5c69;" class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}source="><i class="fas fa-filter"></i> Any Source</a></li>
+                    <li class="dropdown-divider p-0"></li>
+                    {% for source in view.community.source_set.all %}
+                    {% if view.source == source and not view.exclude_source%}
+                    <li><a class="dropdown-item p-0" href="?{% if view.search %}search={{view.search}}&{% endif %}source=-{{source.id}}"><span class="fa-stack small"><i class="{{view.source.icon_name}} fa-stack-1x"></i><i class="fas fa-ban fa-stack-2x"></i></span> {{source.name}}</a></li>
+                    {% else %}
+                    <li><a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}source={{source.id}}"><i class="{{source.icon_name}}"></i> {{source.name}}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                  </ul>
+                </li>
+                {% endif %}
+
+              </ul>
+            </span>
+          {% endif %}
+
+          {% if view.filter.contrib_type %}
+          <!-- Contribution type -->
+           <span class="dropdown display-children-on-hover">
+              {% if view.contrib_type %}
+                <button style="white-space:nowrap;" class="btn dropdown-toggle btn-secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-shield-alt"></i> {{view.contrib_type}}</button>
+              {% else %}
+                <button class="btn btn-light text-muted dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-shield-alt"></i> <span class="display-on-parent-hover">Type</span></button>
+              {% endif %}
+
+              <div class="dropdown-menu animated--fade-in " aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}type="> All Types</a>
+                    <div class="dropdown-divider"></div>
+                    {% for contrib_type in view.community.contribution_type_names %}
+                    <a class="dropdown-item p-2" href="?{% if view.search %}search={{view.search}}&{% endif %}type={{contrib_type}}">{{contrib_type}}</a>
+                    {% endfor %}
+              </div>
+            </span>
+          {% endif %}
+            
+          {% if view.is_filtered %}
+          <a class="btn btn-light text-muted" href="?{% if view.search %}search={{view.search}}&{% endif %}clear=all" title="Clear filters"><i class="fas fa-times"></i></a>
+          {% endif %}
+          <span>

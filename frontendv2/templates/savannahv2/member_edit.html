@@ -1,0 +1,100 @@
+{% extends "savannahv2/base.html"%}
+{% load static member_utils %}
+{% load crispy_forms_tags %}
+
+{% block page_title %} | Edit {{view.member.name}}{% endblock %}
+
+{% block page_content %}
+          <!-- Page Heading -->
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800"><a href="{% url 'member_profile' view.member.id %}"><i class="fas fa-chevron-left"></i></a> Edit {{view.member.name}}</h1>
+          </div>
+
+          <!-- Content Row -->
+
+          <div class="row">
+
+            <!-- Profile  -->
+            <div class="col-xl-8 col-lg-7">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Member Profile</h6>
+
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                <div class="container-fluid">
+
+                <form class="form" action="{% url 'member_edit' view.member.id %}" method="POST">
+                {% csrf_token %}
+                {{ view.form|crispy }}
+                <button class="btn btn-primary" type="submit">Save</button>
+                <a class="btn btn-secondary" href="{% url 'member_profile' view.member.id %}">Cancel</a>
+                </form>
+                </div>            
+
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-5">
+  
+              <!-- Identities  -->
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Identities</h6>
+
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                <div class="container-fluid">
+
+                {% for identity in view.identities %}
+                <div class="row mb-3">
+                  <div class="col-2">
+                  {% if identity.avatar_url %}<a data-toggle="tooltip" title="Use as member avatar" onClick="document.getElementById('id_avatar_url').value = '{{identity.avatar_url}}';">{% endif %}
+                  {{identity.avatar_url|icon}}
+                  {% if identity.avatar_url %}</a>{% endif %}
+                  </div>
+                  <div class="col-8">
+                  <div><a href="{{identity.link_url}}" target="_blank"><i class="{{identity.source.icon_name}}"></i> {{identity.detail}}</a></div>
+                  {% if identity.name and identity.name != identity.detail %}<div>{{identity.name}}</div>{% endif %}
+                  {% if identity.email_address %}<div>{{identity.email_address}}</div>{% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+                </div>            
+
+                </div>
+              </div>
+
+              <!-- Settings  -->
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Settings</h6>
+
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                <div class="container-fluid">
+
+                  <form class="form" action="{% url 'member_settings' view.member.id %}" method="POST">
+                    {% csrf_token %}
+                    {{ view.settings_form|crispy }}
+                    <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+                    </form>
+    
+                </div>            
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}
+

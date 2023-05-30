@@ -1,0 +1,148 @@
+{% extends "savannahv2/base.html"%}
+{% load static member_utils humanize %}
+
+{% block page_title %} | {{view.community.name}} Search{% endblock %}
+
+{% block page_content %}
+          <!-- Page Heading -->
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Search Results</h1>
+            {% include 'savannahv2/filter_button.html' with current_tag=view.tag members_only=True %}
+          </div>
+
+          {% if view.all_companies.count %}
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-12 mb-4">
+
+              <!-- All Members -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Companies</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col"><a href="?{% if view.search %}search={{view.search}}&{% endif %}sort={% if view.sort_by == "name" %}-{% endif %}name">Name&nbsp;<i class="{% if view.sort_by == "name" %}fas fa-sort-down{% elif view.sort_by == "-name" %}fas fa-sort-up{% endif %}"></i></a></th>
+                    <th scope="col"><a href="?{% if view.search %}search={{view.search}}&{% endif %}sort={% if view.sort_by != "-first_seen" %}-{% endif %}first_seen">First Seen&nbsp;<i class="{% if view.sort_by == "first_seen" %}fas fa-sort-down{% elif view.sort_by == "-first_seen" %}fas fa-sort-up{% endif %}"></i></a></th>
+                    <th scope="col"><a href="?{% if view.search %}search={{view.search}}&{% endif %}sort={% if view.sort_by != "-last_seen" %}-{% endif %}last_seen">Last Seen&nbsp;<i class="{% if view.sort_by == "last_seen" %}fas fa-sort-down{% elif view.sort_by == "-last_seen" %}fas fa-sort-up{% endif %}"></i></a></th>
+                    <th scope="col"><a href="?{% if view.search %}search={{view.search}}&{% endif %}sort={% if view.sort_by != "-activity_count" %}-{% endif %}activity_count">Members&nbsp;<i class="{% if view.sort_by == "activity_count" %}fas fa-sort-down{% elif view.sort_by == "-activity_count" %}fas fa-sort-up{% endif %}"></i></a></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for company in view.all_companies %}
+                <tr>
+                  <td>
+                    {{company.logo_url|icon:'img/company-default.png'}}
+                    <a href="{% url 'company_profile' company.id %}">
+                    {{ company.name }}
+                    </a>
+                    {% include 'savannahv2/tag_list.html' with tag=company.tag %}
+                  </td>
+                  <td>{{company.first_activity|date}}</td>
+                  <td>{{company.last_activity|date}}</td>
+                  <td>{{company.member_count|intcomma}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-12 mb-4">
+
+              <!-- All Members -->
+              <div class="card shadow mb-4">
+                <div class="card-header d-sm-flex align-items-center justify-content-between py-3">
+                  <span class="justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary d-inline">Members</h6>
+                    {% include 'savannahv2/filter_pills.html' %}
+                    </span>
+                  <a class="btn btn-sm btn-primary" href="{% url 'members_csv' view.community.id %}"><i class="fas fa-file-csv"> </i> Download</a>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col"><a href="?{% if view.search %}search={{view.search}}&{% endif %}sort={% if view.sort_by == "name" %}-{% endif %}name">Name&nbsp;<i class="{% if view.sort_by == "name" %}fas fa-sort-down{% elif view.sort_by == "-name" %}fas fa-sort-up{% endif %}"></i></a></th>
+                    <th scope="col">Company</th>
+                    <th scope="col">Role</th>
+                    <th scope="col"><a href="?{% if view.search %}search={{view.search}}&{% endif %}sort={% if view.sort_by != "-first_seen" %}-{% endif %}first_seen">First Seen&nbsp;<i class="{% if view.sort_by == "first_seen" %}fas fa-sort-down{% elif view.sort_by == "-first_seen" %}fas fa-sort-up{% endif %}"></i></a></th>
+                    <th scope="col"><a href="?{% if view.search %}search={{view.search}}&{% endif %}sort={% if view.sort_by != "-last_seen" %}-{% endif %}last_seen">Last Seen&nbsp;<i class="{% if view.sort_by == "last_seen" %}fas fa-sort-down{% elif view.sort_by == "-last_seen" %}fas fa-sort-up{% endif %}"></i></a></th>
+                    <th scope="col"><a href="?{% if view.search %}search={{view.search}}&{% endif %}sort={% if view.sort_by != "-activity_count" %}-{% endif %}activity_count">Activities&nbsp;<i class="{% if view.sort_by == "activity_count" %}fas fa-sort-down{% elif view.sort_by == "-activity_count" %}fas fa-sort-up{% endif %}"></i></a></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member in view.all_members %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                    {% if member.tag_count %}{% include 'savannahv2/tag_list.html' with tags=member.tags.all %}{% endif %}
+                  </td>
+                  <td>{{member.company|default:''}}</td>
+                  <td>{{member.get_role_display}}</td>
+                  <td>{{member.first_seen}}</td>
+                  <td>{{member.last_seen}}</td>
+                  <td>{{member.activity_count|intcomma}}</td>
+                </tr>
+                {% if member.note_count %}
+                <tr><td colspan="6">
+                <ul>
+                {% for note in member.note_set.all %}
+                <li><span class="note">{{note.content}}</span></li>
+                {% endfor %}
+                </ul>
+                </td></tr>
+                {% endif %}
+                {% endfor %}
+                </tbody>
+                </table>
+
+                {% if view.has_pages %}
+                <nav aria-label="Member table pages">
+                  <ul class="pagination justify-content-center">
+                    <li class="page-item {% if view.page <= 1 %}disabled{% endif %}">
+                      <a class="page-link" href="?{% if view.search %}search={{view.search}}&{% endif %}page=1" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                      </a>
+                    </li>
+                    {% for page in view.page_links %}
+                      <li class="page-item{% if view.page == page %} active{% endif %}"><a class="page-link" href="?{% if view.search %}search={{view.search}}&{% endif %}page={{page}}">{{page}}</a></li>
+                    {% endfor %}
+                    <li class="page-item{% if view.page >= view.last_page %} disabled{% endif %}">
+                      <a class="page-link" href="?{% if view.search %}search={{view.search}}&{% endif %}page={{view.last_page}}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">{{Next}}</span>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+                {% endif %}
+                <div class="d-flex justify-content-center mb-2">
+                  {{view.page_start}} - {{view.page_end}} of {{ view.result_count|intcomma }} Members
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>        
+
+
+      </div>
+      <!-- /.container-fluid -->
+{% endblock %}
+

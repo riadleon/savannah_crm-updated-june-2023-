@@ -1,0 +1,393 @@
+{% extends "savannahv2/base.html"%}
+{% load static humanize simple_dates member_utils %}
+
+{% block page_title %} | {{view.community.name}} Conversations{% endblock %}
+
+{% block page_content %}
+          <!-- Page Heading -->
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Conversations</h1>
+            {% include 'savannahv2/filter_button.html' with current_tag=view.tag%}
+            <a class="btn btn-light text-muted" title="Share Dashboard" href="{% url 'publish_conversations' view.community.id %}"><i class="fas fa-share-alt"></i></a>
+          </div>
+
+          <!-- Content Row -->
+
+          <div class="row">
+
+            <!-- Area Chart -->
+            <div class="col-xl-9 col-lg-6">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <div class="align-items-center justify-content-left d-inline">
+                  <h6 class="m-0 font-weight-bold text-primary">{{view.conversationsChart.title}}{% include 'savannahv2/filter_pills.html' %}</h6>
+                  </div>
+                  <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" title="Show by..." role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <i class="fas fa-random fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                      <div class="dropdown-header">Show by:</div>
+                      <a class="dropdown-item text-muted" href="?by_convo"><i class="fas fa-comment"> </i> Conversation</a>
+                      <a class="dropdown-item text-muted" href="?by_tag"><i class="fas fa-tags"> </i> Tag</a>
+                      <a class="dropdown-item text-muted" href="?by_source"><i class="fas fa-filter"> </i> Source</a>
+                      <a class="dropdown-item text-muted" href="?by_role"><i class="fas fa-users"> </i> Role</a>
+                    </div>
+                  </div>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-area">
+                    <canvas id="{{view.conversationsChart.id}}"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Members Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-conversation shadow py-2 mb-3">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-conversation text-uppercase mb-1">Conversations</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{view.conversation_count|intcomma}}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-comments fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card border-left-member shadow py-2 mb-3">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-member text-uppercase mb-1">Speakers</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{view.speaker_count|intcomma}}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card border-left-info shadow py-2 mb-3">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Average Response Time <i class="fas fa-question-circle text-sm" title="Replies in threads. Not all Sources have a measurable response time."></i></div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{view.median_response_time|duration|default:"N/A"}}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card border-left-connection shadow py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-connection text-uppercase mb-1">Response Rate <i class="fas fa-question-circle text-sm" title="Replies in threads. Not all Sources have a measurable response rate."></i></div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{view.response_rate|floatformat:2|default:"N/A"}}%</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-reply-all fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Channels Chart -->
+            <div class="col-xl-4 col-lg-6">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">{{view.channelsChart.title}}</h6>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-pie pt-4 pb-2">
+                    <canvas id="{{view.channelsChart.id}}"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tags Chart -->
+            <div class="col-xl-4 col-lg-6">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">{{view.tagsChart.title}}</h6>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-pie pt-4 pb-2">
+                    <canvas id="{{view.tagsChart.id}}"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Roles Chart -->
+            <div class="col-xl-4 col-lg-6">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">{{view.rolesChart.title}}</h6>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-pie pt-4 pb-2">
+                    <canvas id="{{view.rolesChart.id}}"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-7 col-md-12 mb-4">
+              <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Most Shared Links</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                  <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">URL</th>
+                      <th scope="col">References</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {% for link in view.top_links %}
+                  <tr class=" show-children-on-hover">
+                    <td class="text-nowrap">
+                      {% if link.content_type == 'Image' %}
+                      <i class='fas fa-file-image'></i>
+                      {% elif link.content_type == 'Video' %}
+                      <i class='fas fa-file-video'></i>
+                      {% elif link.content_type == 'Document' %}
+                      <i class='fas fa-file-alt'></i>
+                      {% elif link.content_type == 'Code' %}
+                      <i class='fas fa-file-code'></i>
+                      {% elif link.content_type == 'Archive' %}
+                      <i class='fas fa-file-archive'></i>
+                      {% else %}
+                      <i class='fas fa-globe'></i>
+                      {% endif %}
+                      <a href="{{link.url}}" target="_blank">{{link.url|truncatechars:64}}</a>
+                      <a title="Ignore link" class="show-on-parent-hover text-gray-300" href="{% url 'ignore_hyperlink' view.community.id link.id %}">&nbsp;<i class="fas fa-eye-slash"></i></a>
+                    </td>
+                    <td class="text-nowrap">
+                      <a href="?link={{link.id}}">{{link.conversation_count}}</a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                  </tbody>
+                  </table>
+  
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Column -->
+            <div class="col-lg-5 col-md-12 mb-4">
+              <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Linked Sites</h6>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                  <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Domain</th>
+                      <th scope="col">References</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {% for link in view.top_link_sites %}
+                  <tr>
+                    <td class="text-nowrap">
+                      <a href="https://{{link.host}}" target="_blank">{{link.host|truncatechars:64}}</a>
+                    </td>
+                    <td class="text-nowrap"><a href="?conversation_search={{link.host}}">{{link.conversation_count}}</a></td>
+                  </tr>
+                  {% endfor %}
+                  </tbody>
+                  </table>
+  
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+             <!-- Most Active Users-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Most Active</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">Conv.</span><span class="full-text">Conversations</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member in view.most_active %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=member.tags.all %}
+                  </td>
+                  <td>{{member.conversation_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+            </div>
+            <!-- Content Column -->
+            <div class="col-lg-6 mb-4">
+
+              <!-- Most Engaged Users-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Most Engaged</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">Conn.</span><span class="full-text">Connections</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member in view.most_connected %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=member.tags.all %}
+                  </td>
+                  <td>{{member.connection_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-12 mb-4">
+
+              <!-- Most Active Users-->
+              <a name="conversations" />
+              <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Conversations</h6>
+          <form class="d-none d-sm-inline-block form-inline" action="#conversations" method="GET">
+            <div class="input-group">
+              <input name="conversation_search" type="text" class="form-control small" placeholder="Search..." value="{{view.conversation_search|default:''}}" aria-label="Search" aria-describedby="basic-addon2">
+              <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">
+                  <i class="fas fa-search fa-sm"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Channel</th>
+                    <th scope="col">Speaker</th>
+                    <th scope="col">Content</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for conversation in view.all_conversations %}
+                <tr>
+                  <td class="text-nowrap">{{conversation.timestamp|dateortime}}</td>
+                  <td class="text-nowrap"><i class="{{conversation.channel.source.icon_name}}" title="{{conversation.source.name}}"></i> {{conversation.channel.name}}</td>
+                  <td>{% if conversation.speaker %}<a href="{% url 'member_profile' conversation.speaker.id %}">{{conversation.speaker.name}}</a>{% endif %}</td>
+                  <td class="show-children-on-hover">
+                  <div class="show-on-parent-hover d-inline" style="margin-left: -1.5em">
+                  <a title="Promote to Contribution" href="{% url 'promote_to_contribution' member_id=conversation.speaker.id %}?conversation_id={{conversation.id}}">
+                    <i class="fas fa-shield-alt text-gray-300">&nbsp;</i>
+                  </a>
+                  </div>
+                    <a target="_blank" href="{{conversation.location|default:'#'}}" data-toggle="tooltip" data-placement="right" title="{{conversation.content}}">{{ conversation }}</a>
+                    {% include 'savannahv2/tag_list.html' with tags=conversation.tags.all %}
+                  </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+
+                {% if view.has_pages %}
+                <nav aria-label="Conversations table pages">
+                  <ul class="pagination justify-content-center">
+                    <li class="page-item {% if view.page <= 1 %}disabled{% endif %}">
+                      <a class="page-link" href="?{% if view.conversation_search %}conversation_search={{view.conversation_search}}&{% endif %}page=1#conversations" aria-label="First">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                      </a>
+                    </li>
+                    {% for page in view.page_links %}
+                      <li class="page-item{% if view.page == page %} active{% endif %}"><a class="page-link" href="?{% if view.conversation_search %}conversation_search={{view.conversation_search}}&{% endif %}page={{page}}#conversations">{{page}}</a></li>
+                    {% endfor %}
+                    <li class="page-item{% if view.page >= view.last_page %} disabled{% endif %}">
+                      <a class="page-link" href="?{% if view.conversation_search %}conversation_search={{view.conversation_search}}&{% endif %}page={{view.last_page}}#conversations" aria-label="Last">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">{{Next}}</span>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+                {% endif %}
+                <div class="d-flex justify-content-center mb-2">
+                {{view.page_start}} - {{view.page_end}} of {{ view.result_count|intcomma }} Conversations
+                </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}

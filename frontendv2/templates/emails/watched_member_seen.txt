@@ -1,0 +1,12 @@
+{% extends "emails/base.txt"%}
+
+{% block email_body %}
+# Watched Member
+
+{{watch.member.name}} was active in {{watch.last_channel}} on {{watch.last_channel.connector_name}} at {{watch.last_seen}}
+{% if convo %}
+"{{convo.content}}"
+{% endif %}
+View member activity: {{SITE_ROOT}}{% url 'member_activity' watch.member.id %}
+
+{% endblock %}

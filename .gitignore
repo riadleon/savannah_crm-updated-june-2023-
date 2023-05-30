@@ -1,0 +1,8 @@
+*.pyc
+*.sqlite
+*.sqlite3
+.vscode
+local_settings.py
+/static/
+/env/
+**/.DS_Store

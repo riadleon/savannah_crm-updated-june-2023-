@@ -1,0 +1,442 @@
+{% extends "savannahv2/base.html"%}
+{% load static humanize member_utils %}
+
+{% block page_title %} | {{view.community.name}}{% endblock %}
+
+{% block page_content %}
+          <!-- Page Heading -->
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Overview</h1>
+            {% include 'savannahv2/filter_button.html' with current_tag=view.tag%}
+            <a class="btn btn-light text-muted" title="Share Dashboard" href="{% url 'publish_overview' view.community.id %}"><i class="fas fa-share-alt"></i></a>
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Members Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-member shadow h-100 py-2">
+                <a href="{% url 'members' view.community.id %}">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-member text-uppercase mb-1">Members</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{view.member_count|intcomma}}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- Conversations Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-conversation shadow h-100 py-2">
+              <a href="{% url 'conversations' view.community.id %}">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-conversation text-uppercase mb-1">Conversations</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{view.conversation_count|intcomma}}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-comments fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- Contributors Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-contributor shadow h-100 py-2">
+              <a href="{% url 'contributors' view.community.id %}">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-contributor text-uppercase mb-1">Contributors</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{view.contributor_count|intcomma}}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-user-shield fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+                </a>
+              </div>
+            </div>
+
+           
+          <!-- Contributions Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-contribution shadow h-100 py-2">
+              <a href="{% url 'contributions' view.community.id %}">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-contribution text-uppercase mb-1">Contributions</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{view.contribution_count|intcomma}}</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-shield-alt fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Row -->
+
+          <div class="row">
+
+            <!-- Area Chart -->
+            <div class="col-xl-8 col-lg-7">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-left">
+                  <h6 class="m-0 font-weight-bold text-primary">Members</h6>
+                  {% include 'savannahv2/filter_pills.html' %}
+            
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-area">
+                    <canvas id="conversationsChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Member Levels Pie Chart -->
+            <div class="col-xl-4 col-lg-5">
+              <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                  <h6 class="m-0 font-weight-bold text-primary">Engagement Pyramid</h6>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                  <div class="chart-pie pt-4 pb-2">
+                    <canvas id="{{view.levels_chart.id}}"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-4 mb-4">
+
+              <!-- Most Active Users-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Most Active Members</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">#</span><span class="full-text">Conversations</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member in view.most_active %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                  </td>
+                  <td>{{member.conversation_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Column -->
+            <div class="col-lg-4 mb-4">
+
+              <!-- Most Active Users-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Most Engaged Members</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">#</span><span class="full-text">Connections</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member in view.most_connected %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                  </td>
+                  <td>{{member.connection_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Content Column -->
+            <div class="col-lg-4 mb-4">
+
+              <!-- Most Active Users-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Contributors</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Member</th>
+                    <th scope="col"><span class="short-text">#</span><span class="full-text">Contributions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for member in view.top_contributors %}
+                <tr>
+                  <td>
+                    {{member|avatar}}
+                    <a href="{% url 'member_profile' member.id %}">{{ member.name }}</a>
+                  </td>
+                  <td>{{member.contrib_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <!-- Content Row -->
+          <div class="row">
+
+            <!-- Content Column -->
+            <div class="col-lg-4 mb-4">
+
+              <!-- Most Active Users-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Most Involved Companies</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Company</th>
+                    <th scope="col"><span class="short-text">#</span><span class="full-text">Members</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for company in view.company_members %}
+                <tr>
+                  <td>
+                    {{company.icon_url|icon:"img/company-default.png"}}
+                    <a href="{% url 'company_profile' company.id %}">{{ company.name }}</a>
+                  </td>
+                  <td>{{company.member_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Column -->
+            <div class="col-lg-4 mb-4">
+
+              <!-- Most Active Users-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Most Active Companies</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Company</th>
+                    <th scope="col"><span class="short-text">#</span><span class="full-text">Conversations</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for company in view.company_conversations %}
+                <tr>
+                  <td>
+                    {{company.icon_url|icon:"img/company-default.png"}}
+                    <a href="{% url 'company_profile' company.id %}">{{ company.name }}</a>
+                  </td>
+                  <td>{{company.convo_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Column -->
+            <div class="col-lg-4 mb-4">
+
+              <!-- Most Active Users-->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Top Contributing Companies</h6>
+                </div>
+                <div class="card-body p-0">
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Company</th>
+                    <th scope="col"><span class="short-text">#</span><span class="full-text">Contributions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                {% for company in view.company_contributions %}
+                <tr>
+                  <td>
+                    {{company.icon_url|icon:"img/company-default.png"}}
+                    <a href="{% url 'company_profile' company.id %}">{{ company.name }}</a>
+                  </td>
+                  <td>{{company.contrib_count}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+        <!-- /.container-fluid -->
+{% endblock %}
+
+{% block page_scripts %}
+  <script>
+// Area Chart Example
+var ctx = document.getElementById("conversationsChart");
+var myLineChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: {{view.members_chart_months|safe}},
+    datasets: [{
+      label: "Members",
+      lineTension: 0.3,
+      backgroundColor: "#{{colors.MEMBER}}22",
+      borderColor: "#{{colors.MEMBER}}",
+      borderWidth: 1,
+      pointRadius: 0,
+      pointBackgroundColor: "#{{colors.MEMBER}}",
+      pointBorderColor: "#{{colors.MEMBER}}",
+      pointHoverRadius: 3,
+      pointHoverBackgroundColor: "#{{colors.MEMBER}}",
+      pointHoverBorderColor: "#{{colors.MEMBER}}",
+      pointHitRadius: 10,
+      pointBorderWidth: 2,
+      data: {{view.members_chart_counts|safe}},
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        left: 10,
+        right: 25,
+        top: 25,
+        bottom: 0
+      }
+    },
+    scales: {
+      xAxes: [{
+        time: {
+          unit: 'date'
+        },
+        gridLines: {
+          display: false,
+          drawBorder: true
+        },
+        ticks: {
+          maxTicksLimit: 7
+        }
+      }],
+      yAxes: [{
+        ticks: {
+          maxTicksLimit: 5,
+          padding: 10,
+          // Include a dollar sign in the ticks
+          callback: function(value, index, values) {
+            return value;
+          }
+        },
+        gridLines: {
+          color: "rgb(234, 236, 244)",
+          zeroLineColor: "rgb(234, 236, 244)",
+          drawBorder: true,
+          borderDash: [2],
+          zeroLineBorderDash: [2]
+        }
+      }],
+    },
+    legend: {
+      display: false
+    },
+    tooltips: {
+      backgroundColor: "rgb(255,255,255)",
+      bodyFontColor: "#858796",
+      titleMarginBottom: 10,
+      titleFontColor: '#6e707e',
+      titleFontSize: 14,
+      borderColor: '#dddfeb',
+      borderWidth: 1,
+      xPadding: 15,
+      yPadding: 15,
+      displayColors: true,
+      intersect: false,
+      mode: 'index',
+      caretPadding: 10,
+      callbacks: {
+        label: function(tooltipItem, chart) {
+          var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+          return datasetLabel + ': ' + tooltipItem.yLabel;
+        }
+      }
+    }
+  }
+});
+  </script>
+
+  <script>
+$("#{{view.levels_chart.id}}").click( 
+    function(evt){
+        var activePoints = myPieChart.getElementAtEvent(evt);  
+        window.location = "{% url 'project_overview' view.community.id view.community.default_project.id %}";
+    }
+); 
+  </script>
+  {% endblock %}
